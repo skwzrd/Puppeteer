@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puppeteer</title>
+    <style>
+        body {
+            font-family: 'Ubuntu', sans-serif;
+            margin: 0;
+            padding: 0;
+            margin-top: 4px;
+            background-color: #1f1e1e;
+            color: #b9b9b9;
+        }
+        #container {
+            margin: auto;
+            text-align: center;
+        }
+        button {
+            margin: 5px auto;
+            padding: 7px 4px;
+            font-size: 16px;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 5px;
+            border: none;
+            background-color: #2e4268;
+        }
+        #image_input_btn {
+            background-color: #00639c;
+        }
+        #audio_input_btn {
+            background-color: #165331;
+        }
+        #reset_all_btn {
+            background-color: #5f008b;
+        }
+        #reset_parent_btn, #clear_overlay {
+            background-color: #1e00a5;
+        }
+        #stop_all {
+            background-color: #860000;
+        }
+        .move {
+            background-color: #915555;
+        }
+        .keyframe_anime {
+            background-color: #237034;
+        }
+        .effect {
+            color: #1f1e1e;
+            background-color: #acbd18;
+        }
+        #thumbnail_grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .thumbnail {
+            width: 40px;
+            height: 40px;
+            margin: 0 4px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+            display: block;
+            border: 3px solid;
+        }
+        .thumbnail:hover {
+            opacity: 1;
+        }
+        p {
+            margin: 1px;
+        }
+        .thumbnail-container {
+            display: inline-block;
+            text-align: center;
+            margin: 0;
+            font-size: 8pt;
+            padding: 4px;
+        }
+        #parent_media_container {
+            display: none;
+            margin-bottom: 20px;
+        }
+        #parent_media {
+            max-width: 95%;
+            max-height: 800px;
+        }
+        #child_media {
+            position: absolute;
+        }
+        #audio_player {
+            width: 50%;
+        }
+        @keyframes curtseyAnimation {
+            0% { transform: rotate(0deg) translateY(0); }
+            25% { transform: rotate(10deg) translateY(20px); }
+            50% { transform: rotate(0deg) translateY(0); }
+            75% { transform: rotate(-10deg) translateY(20px); }
+            100% { transform: rotate(0deg) translateY(0); }
+        }
+        .curtsey {
+            animation: curtseyAnimation 4s infinite;
+        }
+        .spin {
+            transform: rotate(360deg);
+            transition: transform 1s ease-in-out;
+        }
+        @keyframes hobbleAnimation {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(10px); }
+            100% { transform: translateY(0); }
+        }
+        .hobble {
+            animation: hobbleAnimation 0.5s ease-in-out infinite;
+        }
+        @keyframes bloatAnimation {
+            0% { transform: scale(none); }
+            50% { transform: scale(1.5); }
+            100% { transform: scale(none); }
+        }
+        .bloat {
+            animation: bloatAnimation 2s ease-in-out;
+        }
+        @keyframes crouchAnimation {
+            0% { transform: translateY(none); }
+            100% { transform: translateY(500px); }
+        }
+        #text_overlay {
+            background-color: #00335e;
+            color: #34bfff;
+            border: 4px solid #006a94;
+            padding: 5px;
+            position: absolute;
+            z-index: 2;
+            white-space: pre-wrap;
+        }
+        #textInput {
+            border: 1px solid #553dbd;
+            border-radius: 5px;
+            padding: 2px;
+            background-color: #3b3b3b;
+            color: #f3f3f3;
+            margin: 4px;
+        }
+        table {
+            margin: 0 auto;
+        }
+        input[type="color"] {
+            padding: 0;
+            width: 2em;
+            height: 2em;
+            border: 1px solid #553dbd;
+        }
+        input[type="text"] {
+            padding: 4px;
+            border: 1px solid #553dbd;
+        }
+        input[type="range"] {
+            width: 80px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="container">
+    <table>
+        <tr>
+            <td>
+                <table>
+                    <tr>
+                        <td>
+                            <div><strong>Import</strong></div>
+                            <input type="file" id="image_input" accept="image/*,video/*" multiple style="display:none;">
+                            <input type="file" id="audio_input" accept="audio/mpeg" style="display:none; max-width: 50%">
+                            
+                            <button id="image_input_btn">Media</button>
+                            <button id="audio_input_btn">Audio</button>
+                            <button id="reset_parent_btn">Wipe Display</button>
+                            <button id="reset_all_btn">Wipe All</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" id="filepath" placeholder="full path to video directory">
+                        </td>
+                    </tr>
+                </table>
+            </td>
+            <td>
+                <table>
+                    <tr>
+                        <td>
+                            <button id="stop_all">stop keyframes</button>
+                            <button id="curtsey" class="keyframe_anime">curtsey</button>
+                            <button id="hobble" class="keyframe_anime">hobble</button>
+                            <button id="go_to_center" class="move">center center</button>
+                            <button id="bloat" class="keyframe_anime">bloat</button>
+                            <button id="spin" class="keyframe_anime">spin</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button id="clear_overlay">wipe overlay</button>
+                            <button id="go_off_screen">exit</button>
+                            <button id="walk">walk</button>
+                            <button id="crouch">crouch</button>
+                            <button id="left_corner" class="move">left</button>
+                            <button id="go_to_center_bottom" class="move">center</button>
+                            <button id="right_corner" class="move">right</button>
+                            <button id="fade_in" class="effect">fin</button>
+                            <button id="fade_out" class="effect">fout</button>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+            <td>
+                <table>
+                    <tr>
+                        <td>
+                            <table>
+                                <tr>
+                                    <td>
+                                        <label for="opacity_slider">Opactiy</label>
+                                        <input type="range" id="opacity_slider" min="0" max="100" value="100">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <label for="size_slider">Size</label>
+                                        <input type="range" id="size_slider" min="0" max="800">
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+            <td>
+                <div id="text_overlay"></div>
+                <div class="controls">
+                    <label>
+                        Bg <input type="color" id="bg_color" value="#00335e">
+                    </label>
+                    <label>
+                        Text <input type="color" id="text_color" value="#34bfff">
+                    </label>
+                    <label>
+                        Border <input type="color" id="border_color" value="#006a94">
+                    </label>
+                </div>
+                <textarea type="textarea" id="textInput" cols="30" rows="3" placeholder="Enter dialogue here"></textarea>
+            </td>
+        </tr>
+    </table>
+    <p id="audio_container"></p>
+    <div id="thumbnail_grid"></div>
+    <div id="parent_media_container"></div>
+</div>
+
+<script>
+    var SIDE = 'RIGHT';
+
+    document.getElementById('opacity_slider').addEventListener('input', function() {
+        const sliderValue = this.value;
+        const opacityValue = sliderValue / 100;
+        document.getElementById('child_media').style.opacity = opacityValue;
+    });
+
+
+    const size_slider = document.getElementById('size_slider');
+    function updateDimensions(width_i, height_i) {
+        const child_media = document.getElementById('child_media');
+        const child_media_rec = document.getElementById('child_media').getBoundingClientRect();
+
+        const aspect_ratio = child_media_rec.width / child_media_rec.height;
+        const parent_rec = document.getElementById('parent_media').getBoundingClientRect();
+        const max_w = Math.min(size_slider.value, parent_rec.width);
+        const max_h = Math.min(size_slider.value, parent_rec.height);
+
+        if (max_w / aspect_ratio <= max_h) {
+            child_media.style.width = max_w + 'px';
+            child_media.style.height = 'auto';
+        } else {
+            child_media.style.height = max_h + 'px';
+            child_media.style.width = 'auto';
+        }
+        delta_y = child_media_rec.top - ((child_media.height - height_i) / 2);
+        delta_x = child_media_rec.left - ((child_media.width - width_i) / 2);
+        child_media.style.top = delta_y + 'px';
+        child_media.style.left = delta_x + 'px';
+    }
+    size_slider.addEventListener('input', () => {
+        const child_media = document.getElementById('child_media').getBoundingClientRect();
+        updateDimensions(child_media.width, child_media.height);
+    });
+
+
+    const bgColorInput = document.getElementById('bg_color');
+    const textColorInput = document.getElementById('text_color');
+    const borderColorInput = document.getElementById('border_color');
+    const textOverlay = document.getElementById('text_overlay');
+    function updateColors() {
+        textOverlay.style.backgroundColor = bgColorInput.value;
+        textOverlay.style.color = textColorInput.value;
+        textOverlay.style.borderColor = borderColorInput.value;
+    }
+    bgColorInput.addEventListener('input', updateColors);
+    textColorInput.addEventListener('input', updateColors);
+    borderColorInput.addEventListener('input', updateColors);
+    updateColors();
+
+
+    document.getElementById('image_input_btn').addEventListener('click', () => {
+        document.getElementById('image_input').click();
+    })
+
+    document.getElementById('audio_input_btn').addEventListener('click', () => {
+        document.getElementById('audio_input').click();
+    })
+
+    document.getElementById('audio_input').addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const audio_container = document.getElementById('audio_container');
+        audio_container.innerHTML = '<audio controls id="audio_player"></audio>';
+        audio_container.firstChild.src = URL.createObjectURL(file);
+    });
+
+    function get_video_node(src){
+        return `<video controls><source src="${src}"/></video>`;
+    }
+
+    function get_image_node(src){
+        return `<img src="${src}"/>`;
+    }
+
+    document.getElementById('image_input').addEventListener('change', function(event) {
+        const files = Array.from(event.target.files);
+
+        const isImage = file => file.type.startsWith('image/');
+        const isVideo = file => file.type.startsWith('video/');
+        const images = files.filter(isImage);
+        const videos = files.filter(isVideo);
+
+        const sortByName = (a, b) => a.name.localeCompare(b.name);
+        const sortedImages = images.sort(sortByName);
+        const sortedVideos = videos.sort(sortByName);
+
+        const sortedFiles = [...sortedImages, ...sortedVideos];
+
+        const thumbnail_grid = document.getElementById('thumbnail_grid');
+        thumbnail_grid.innerHTML = '';
+
+        for (let i = 0; i < sortedFiles.length; i++) {
+            const file = sortedFiles[i];
+
+            if (file.type.startsWith('image/') || file.type.startsWith('video/')){
+
+                const reader = new FileReader();
+                reader.onload = function() {
+
+                    const container = document.createElement('div');
+                    container.classList.add('thumbnail-container');
+
+                    var filePath = document.getElementById('filepath').value;
+                    if (filePath){
+                        if (filePath.endsWith('/')) {
+                            filePath = filePath.slice(0, -1);
+                        }
+                        if (!filePath.startsWith('file://')) {
+                            filePath = 'file://' + filePath;
+                        }
+                        filePath += '/' + file.name;
+                    }
+                    else{
+                        filePath = reader.result;
+                    }
+
+                    var media;
+                    var media_node_type;
+                    if (file.type.startsWith('image/')) {
+                        media_node_type = 'img';
+                        media = document.createElement('img');
+                        media.src = filePath;
+                        media.style.borderColor = '#7100a5';
+                    }
+                    else {
+                        media_node_type = 'video';
+                        media = document.createElement('video');
+                        media.src = filePath;
+                        media.style.borderColor = '#00639c';
+                    }
+
+                    media.classList.add('thumbnail');
+
+                    container.appendChild(media);
+                    
+                    const name = document.createElement('span');
+                    const filename = String(file.name);
+                    name.innerHTML = filename.substring(0, filename.lastIndexOf('.')).substring(0, 12);
+                    container.appendChild(name);
+
+                    media.addEventListener('click', function() {
+                        display_selected_image(media_node_type, filePath);
+                    });
+
+                    thumbnail_grid.appendChild(container);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+    });
+
+    function get_media_node(media_node_type, media_src){
+        var div = document.createElement('div');
+        var inner;
+        if (media_node_type == 'video'){
+            inner = get_video_node(media_src);
+        }
+        else{
+            inner = get_image_node(media_src)
+        }
+        div.innerHTML = inner;
+        return div.firstChild;
+    }
+
+    function display_selected_image(media_node_type, media_src) {
+        const parent_media_container = document.getElementById('parent_media_container');
+        var parent_media = document.getElementById('parent_media');
+
+        if (parent_media){
+            parent_rec = parent_media.getBoundingClientRect();
+
+            var media = get_media_node(media_node_type, media_src);
+            media.id = 'child_media';
+
+            // maintain aspect ratio
+            max_frac_width = 0.3
+            max_frac_height = 0.5
+            
+            const max_child_width = Math.floor(parent_rec.width * max_frac_width);
+            const max_child_height = Math.floor(parent_rec.height * max_frac_height);
+
+            var child_width;
+            var child_height;
+            if (media_node_type == 'img'){
+                child_height = media.height;
+                child_width = media.width;
+            }
+            else if (media_node_type == 'video'){
+                child_height = media.videoHeight;
+                child_width = media.videoWidth;
+            }
+
+            media.height = Math.min(max_child_height, (max_child_width / child_width) * child_height);
+            media.width = Math.min(max_child_width, (max_child_height / child_height) * child_width);
+            
+
+            media.style.top = parent_rec.bottom + window.scrollY - media.height + 'px';
+            if (SIDE == 'LEFT'){
+                media.style.left = parent_rec.left + 'px';
+            }
+            else{
+                media.style.left = parent_rec.right - media.width + 'px';
+            }
+
+            const duration = 700;
+            const child_media_old = document.getElementById('child_media');
+            let current_opacity = 1;
+            if (child_media_old) {
+                current_opacity = child_media_old.style.opacity;
+                fade_out_a_to_b(child_media_old, duration, current_opacity, 0);
+                setTimeout(() => {
+                    child_media_old.remove();
+                }, duration + 200);
+
+                media.style.left = child_media_old.style.left;
+                media.style.top = child_media_old.style.top;
+            }
+
+            document.body.appendChild(media);
+            fade_in_a_to_b(media, duration, 0, current_opacity);
+        }
+        else {
+            parent_media = get_media_node(media_node_type, media_src);
+            parent_media.id = 'parent_media';
+            parent_media_container.appendChild(parent_media);
+            parent_media_container.style.display = 'block';
+            parent_media_container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        }
+        const size_slider = document.getElementById('size_slider');
+        const p = document.getElementById('parent_media');
+        size_slider.max.value = Math.min(p.width, p.height) / 2;
+        size_slider.min.value = 0;
+        
+    }
+
+    document.getElementById('reset_all_btn').addEventListener('click', function() {
+        const parent_media_container = document.getElementById('parent_media_container');
+        parent_media_container.outerHTML = '<div id="parent_media_container"></div>';
+        
+        const thumbnail_grid = document.getElementById('thumbnail_grid');
+        thumbnail_grid.innerHTML = '';
+
+        const child_media = document.getElementById('child_media');
+        if (child_media) child_media.remove();
+
+        const audio_container = document.getElementById('audio_container');
+        audio_container.innerHTML = '';
+
+        document.getElementById('textInput').value = '';
+    });
+
+    document.getElementById('reset_parent_btn').addEventListener('click', function() {
+        const parent_media_container = document.getElementById('parent_media_container');
+        parent_media_container.outerHTML = '<div id="parent_media_container"></div>';
+
+        const child_media = document.getElementById('child_media');
+        if (child_media) child_media.remove();
+    });
+
+
+    document.getElementById('curtsey').addEventListener('click', function() {
+        document.getElementById('child_media').classList = 'curtsey';
+    });
+
+    document.getElementById('spin').addEventListener('click', function() {
+        document.getElementById('child_media').classList = '';
+        setTimeout(() => {
+            document.getElementById('child_media').classList = 'spin';
+        }, 100);
+    });
+
+    document.getElementById('hobble').addEventListener('click', function() {
+        document.getElementById('child_media').classList = 'hobble';
+    });
+
+    document.getElementById('bloat').addEventListener('click', function() {
+        document.getElementById('child_media').classList = '';
+        setTimeout(() => {
+            document.getElementById('child_media').classList = 'bloat';
+        }, 100);
+    });
+
+    document.getElementById('stop_all').addEventListener('click', function() {
+        document.getElementById('child_media').classList = '';
+    });
+
+    document.getElementById('clear_overlay').addEventListener('click', function() {
+        while (document.getElementById('child_media')) {
+            document.getElementById('child_media').remove();
+        }
+    });
+
+    function animateElement(element, startX, startY, endX, endY, duration) {
+        const startTime = performance.now();
+
+        function animate(time) {
+            const elapsed = time - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+
+            const currentX = startX + (endX - startX) * progress;
+            const currentY = startY + (endY - startY) * progress;
+
+            element.style.left = currentX + "px";
+            element.style.top = currentY + "px";
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            }
+        }
+
+        requestAnimationFrame(animate);
+    }
+
+    function fade_in_a_to_b(element, duration, a, b) {
+        let opacity = a;
+        const interval = 10;
+        const increment = interval / duration;
+        function animate() {
+            opacity += increment;
+            if (opacity >= b) {
+                opacity = b;
+                element.style.opacity = opacity;
+                return;
+            }
+            element.style.opacity = opacity;
+            requestAnimationFrame(animate);
+        }
+        animate();
+    }
+
+    function fade_out_a_to_b(element, duration, a, b) {
+        let opacity = a;
+        const interval = 10;
+        const increment = interval / duration;
+        function animate() {
+            opacity -= increment;
+            if (opacity <= b) {
+                opacity = b;
+                element.style.opacity = opacity;
+                return;
+            }
+            element.style.opacity = opacity;
+            requestAnimationFrame(animate);
+        }
+        animate();
+    }
+
+    function fade_in(element, duration) {
+        if (element.style.opacity >= 0.95){
+            return;
+        }
+        let opacity = 0;
+        const interval = 10;
+        const increment = interval / duration;
+        function animate() {
+            opacity += increment;
+            if (opacity >= 1) {
+                opacity = 1;
+                element.style.opacity = opacity;
+                return;
+            }
+            element.style.opacity = opacity;
+            requestAnimationFrame(animate);
+        }
+        animate();
+    }
+
+    function fade_out(element, duration) {
+        if (element.style.opacity <= 0.05){
+            return;
+        }
+        let opacity = 1;
+        const interval = 10;
+        const increment = interval / duration;
+        function animate() {
+            opacity -= increment;
+            if (opacity <= 0) {
+                opacity = 0;
+                element.style.opacity = opacity;
+                return;
+            }
+            element.style.opacity = opacity;
+            requestAnimationFrame(animate);
+        }
+        animate();
+    }
+
+    function go_off_screen(childMedia){
+        const childMediaRec = childMedia.getBoundingClientRect();
+        const parentMediaRec = document.getElementById("parent_media").getBoundingClientRect();
+
+        const startX = childMediaRec.left;
+        const startY = childMediaRec.top;
+
+        const pad = 5;
+        const w = childMediaRec.width + pad;
+
+        const endX = SIDE == 'RIGHT' ? parentMediaRec.right + pad: parentMediaRec.left - w;
+        const endY = startY;
+
+        SIDE = SIDE === 'RIGHT' ? 'LEFT' : 'RIGHT';
+
+        animateElement(childMedia, startX, startY, endX, endY, 3000);
+    }
+
+    function walk_smoothly(childMedia) {
+        const childMediaRec = childMedia.getBoundingClientRect();
+        const parentMediaRec = document.getElementById("parent_media").getBoundingClientRect();
+
+        const startX = childMediaRec.left;
+        const startY = childMediaRec.top;
+        const endX = SIDE === 'RIGHT' ? parentMediaRec.right - childMediaRec.width : parentMediaRec.left;
+        const endY = startY;
+
+        SIDE = SIDE === 'RIGHT' ? 'LEFT' : 'RIGHT';
+
+        animateElement(childMedia, startX, startY, endX, endY, 3000);
+    }
+
+    function crouch_halfway_down(childMedia) {
+        const childMediaRec = childMedia.getBoundingClientRect();
+        const parentMediaRec = document.getElementById("parent_media").getBoundingClientRect();
+
+        const startX = childMediaRec.left;
+        const startY = childMediaRec.top;
+        const endX = startX;
+        const endY = startY + (childMediaRec.height / 2);
+
+        animateElement(childMedia, startX, startY, endX, endY, 1500);
+    }
+
+    function go_to_corner_right(childMedia) {
+        const childMediaRec = childMedia.getBoundingClientRect();
+        const parentMediaRec = document.getElementById("parent_media").getBoundingClientRect();
+
+        const startX = childMediaRec.left;
+        const startY = childMediaRec.top;
+        const endX = parentMediaRec.right - childMediaRec.width;
+        const endY = parentMediaRec.bottom - childMediaRec.height;
+
+        SIDE = SIDE === 'RIGHT' ? 'LEFT' : 'RIGHT';
+
+        animateElement(childMedia, startX, startY, endX, endY, 2000);
+    }
+
+    function go_to_corner_left(childMedia) {
+        const childMediaRec = childMedia.getBoundingClientRect();
+        const parentMediaRec = document.getElementById("parent_media").getBoundingClientRect();
+
+        const startX = childMediaRec.left;
+        const startY = childMediaRec.top;
+        const endX = parentMediaRec.left;
+        const endY = parentMediaRec.bottom - childMediaRec.height;
+
+        SIDE = SIDE === 'RIGHT' ? 'LEFT' : 'RIGHT';
+
+        animateElement(childMedia, startX, startY, endX, endY, 2000);
+    }
+
+    function go_to_center(childMedia) {
+        const childMediaRec = childMedia.getBoundingClientRect();
+        const parentMediaRec = document.getElementById("parent_media").getBoundingClientRect();
+
+        const startX = childMediaRec.left;
+        const startY = childMediaRec.top;
+        const endX = parentMediaRec.left + (parentMediaRec.width / 2) - (childMediaRec.width / 2);
+        const endY = parentMediaRec.top + (parentMediaRec.height / 2) - (childMediaRec.height / 2);
+
+        animateElement(childMedia, startX, startY, endX, endY, 2000);
+    }
+
+    function go_to_center_bottom(childMedia) {
+        const childMediaRec = childMedia.getBoundingClientRect();
+        const parentMediaRec = document.getElementById("parent_media").getBoundingClientRect();
+
+        const startX = childMediaRec.left;
+        const startY = childMediaRec.top;
+        const endX = parentMediaRec.left + (parentMediaRec.width / 2) - (childMediaRec.width / 2);
+        const endY = parentMediaRec.bottom - childMediaRec.height;
+
+        animateElement(childMedia, startX, startY, endX, endY, 2000);
+    }
+
+    document.getElementById('textInput').addEventListener('input', function() {
+        const textOverlay = document.getElementById('text_overlay');
+        const inputText = this.value.trim();
+
+        if (inputText) {
+            const parentMediaRec = document.getElementById("parent_media").getBoundingClientRect();
+            textOverlay.textContent = inputText;
+            var buff = 15;
+            var w = textOverlay.clientWidth;
+            var h = textOverlay.clientHeight;
+            var l = parentMediaRec.left + (parentMediaRec.width / 2) - (w / 2);
+            var t = parentMediaRec.bottom - h - buff;
+            textOverlay.style.left = l + 'px';
+            textOverlay.style.top = t + 'px';
+        } else {
+            textOverlay.textContent = '';
+            textOverlay.style.left = 0 + 'px';
+            textOverlay.style.top = 0 + 'px';
+        }
+    });
+
+    document.getElementById("walk").addEventListener("click", () => walk_smoothly(document.getElementById("child_media")));
+    document.getElementById("crouch").addEventListener("click", () => crouch_halfway_down(document.getElementById("child_media")));
+    document.getElementById("go_to_center").addEventListener("click", () => go_to_center(document.getElementById("child_media")));
+    document.getElementById("go_to_center_bottom").addEventListener("click", () => go_to_center_bottom(document.getElementById("child_media")));
+    document.getElementById("left_corner").addEventListener("click", () => go_to_corner_left(document.getElementById("child_media")));
+    document.getElementById("right_corner").addEventListener("click", () => go_to_corner_right(document.getElementById("child_media")));
+    document.getElementById("go_off_screen").addEventListener("click", () => go_off_screen(document.getElementById("child_media")));
+    document.getElementById("fade_in").addEventListener("click", () => fade_in(document.getElementById("child_media"), 2000));
+    document.getElementById("fade_out").addEventListener("click", () => fade_out(document.getElementById("child_media"), 2000));
+
+</script>
+
+</body>
+</html>
